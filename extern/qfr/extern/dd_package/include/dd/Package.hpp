@@ -2147,9 +2147,16 @@ namespace dd {
             }
 
             if (!e.w.exactlyZero() && !e.w.exactlyOne()) {
-                cn.returnToCache(e.w);
-                e.l = lf.limTable.lookup(LimEntry<>(e.l));
-                e.w = cn.lookup(e.w);
+                // guard the refcount -- only return to cache when both ref counts are zero
+                // this avoids returning to cache the global singletions for \pm 1, \pm i
+                // which can happen when explicit identity gate is present in the circuit
+                const auto rRef = CTEntry::getAlignedPointer(e.w.r)->refCount;
+                const auto iRef = CTEntry::getAlignedPointer(e.w.i)->refCount;
+                if (rRef == 0 && iRef == 0) {
+                    cn.returnToCache(e.w);
+                    e.l = lf.limTable.lookup(LimEntry<>(e.l));
+                    e.w = cn.lookup(e.w);
+                }
             }
 
             [[maybe_unused]] const auto after         = cn.cacheCount();
