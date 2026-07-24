@@ -61,6 +61,37 @@ void qc::QuantumComputation::importOpenQASM(std::istream& is) {
             }
 
             emplace_back<NonUnitaryOperation>(nqubits, qubits, Barrier);
+        } else if (p.sym == Token::Kind::__for) {
+            // for int i in [1:10] { ... }
+            p.scan();
+            p.check(Token::Kind::__int);
+            p.check(Token::Kind::identifier); // loop variable
+            std::string var = p.t.str;
+            p.check(Token::Kind::__in);
+            p.check(Token::Kind::lbrack);
+            p.check(Token::Kind::nninteger);
+            const int start = p.t.val;
+            p.check(Token::Kind::__colon);
+            p.check(Token::Kind::nninteger);
+            const int end = p.t.val;
+            if (start > end){
+                p.error("Error in for loop: start is greater than end");
+            }
+            p.check(Token::Kind::rbrack);
+            p.check(Token::Kind::lbrace);
+            // parse the body of the loop
+            std::vector<std::unique_ptr<Operation>> body;
+            while (p.sym != Token::Kind::rbrace && p.sym != Token::Kind::eof) {
+                if (p.sym == Token::Kind::comment){
+                    p.scan();
+                    p.handleComment();
+                    continue;
+                }
+                body.emplace_back(p.Qop());
+            }
+            p.check(Token::Kind::rbrace);
+            auto loop_operation = std::make_unique<ForLoopOperation>(start, end, std::move(var), std::move(body));
+            emplace_back(loop_operation);
         } else if (p.sym == Token::Kind::opaque) {
             p.OpaqueGateDecl();
         } else if (p.sym == Token::Kind::_if) {

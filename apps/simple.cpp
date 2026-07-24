@@ -34,7 +34,8 @@ int main(int argc, char** argv) {
         ("step_fidelity", "target fidelity for each approximation run (>=1 = disable approximation)", cxxopts::value<double>()->default_value("1.0"))
         ("steps", "number of approximation steps", cxxopts::value<unsigned int>()->default_value("1"))
         ("approx_when", "approximation method ('fidelity' (default) or 'memory'", cxxopts::value<std::string>()->default_value("fidelity"))
-        ("approx_state", "do excessive approximation runs at the end of the simulation to see how the quantum state behaves");
+        ("approx_state", "do excessive approximation runs at the end of the simulation to see how the quantum state behaves")
+        ("summarize_loops", "summarize loops using symbolic execution", cxxopts::value<bool>()->default_value("false"));
     // clang-format on
 
     auto vm = options.parse(argc, argv);
@@ -47,7 +48,7 @@ int main(int argc, char** argv) {
     const auto shots         = vm["shots"].as<unsigned int>();
     const auto approx_steps  = vm["steps"].as<unsigned int>();
     const auto step_fidelity = vm["step_fidelity"].as<double>();
-
+    const auto summarize_loops = vm["summarize_loops"].as<bool>();
     ApproximationInfo::ApproximationWhen approx_when;
     if (vm["approx_when"].as<std::string>() == "fidelity") {
         approx_when = ApproximationInfo::FidelityDriven;
@@ -82,7 +83,9 @@ int main(int argc, char** argv) {
     if (ddsim->getNumberOfQubits() > 100) {
         std::clog << "[WARNING] Quantum computation contains quite a few qubits. You're jumping into the deep end.\n";
     }
-
+    
+    
+    ddsim->setSummarizeLoops(summarize_loops);
     auto t1 = std::chrono::high_resolution_clock::now();
     auto m  = ddsim->Simulate(shots);
     auto t2 = std::chrono::high_resolution_clock::now();

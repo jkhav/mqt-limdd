@@ -139,6 +139,9 @@ namespace qasm {
         keywords["barrier"]            = Token::Kind::barrier;
         keywords["opaque"]             = Token::Kind::opaque;
         keywords["if"]                 = Token::Kind::_if;
+        keywords["for"]                = Token::Kind::__for;
+        keywords["int"]                = Token::Kind::__int;
+        keywords["in"]                 = Token::Kind::__in;
         keywords["reset"]              = Token::Kind::reset;
         keywords["snapshot"]           = Token::Kind::snapshot;
         nextCh();
@@ -236,6 +239,10 @@ namespace qasm {
                 break;
             case '[':
                 t.kind = Token::Kind::lbrack;
+                nextCh();
+                break;
+            case ':':
+                t.kind = Token::Kind::__colon;
                 nextCh();
                 break;
             case ']':

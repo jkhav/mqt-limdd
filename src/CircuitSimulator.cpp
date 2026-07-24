@@ -143,51 +143,81 @@ std::map<std::size_t, bool> CircuitSimulator<DDPackage>::single_shot(const bool 
                     throw std::runtime_error("Dynamic cast to ClassicControlledOperation failed.");
                 }
             }
+            if (op->getType() == qc::ForLoop) {
+                if (auto* for_op = dynamic_cast<qc::ForLoopOperation*>(op.get())) {
+                    const int start = for_op->getStart();
+                    const int stop = for_op->getStop();
+                    const std::string& var = for_op->getLoopVar();
+                    const std::vector<std::unique_ptr<qc::Operation>>& body = for_op->getBody();
+                    // classic evaluation of the loop
+                    if(!this->summarize_loops){
+                        std::cout << "Not summarizing loop" << std::endl;
+                        for (int i = start; i <= stop; i++) {
+                            std::cout << "Evaluating body of loop for " << var << " = " << i << std::endl;
+                            for (const auto& body_op: body) {
+                                single_shot_gate_application(body_op.get(), op_num, approx_mod);
+                            }
+                        }
+                    }
+                    // loop summarization using symbolic execution
+                    else {
+                        std::cout << "Summarizing loop" << std::endl;
+                    }
+                }
+                op_num++;
+                continue;
+            }
             /*std::clog << "[INFO] op " << op_num << " is " << op->getName() << " on " << +op->getTargets().at(0)
                       << " #controls=" << op->getControls().size()
                       << " statesize=" << dd->size(rootEdge) << "\n";//*/
 
-            auto dd_op = dd::getDD(op.get(), Simulator<DDPackage>::dd);
-            auto tmp   = Simulator<DDPackage>::dd->multiply(dd_op, Simulator<DDPackage>::rootEdge);
-            Simulator<DDPackage>::dd->incRef(tmp);
-            Simulator<DDPackage>::dd->decRef(Simulator<DDPackage>::rootEdge);
-            Simulator<DDPackage>::rootEdge = tmp;
-
-            if (approx_info.step_number > 0 && approx_info.step_fidelity < 1.0) {
-                if (approx_info.approx_when == ApproximationInfo::FidelityDriven && (op_num + 1) % approx_mod == 0 &&
-                    approximation_runs < approx_info.step_number) {
-                    //const unsigned int size_before = dd->size(rootEdge);
-                    const double ap_fid = Simulator<DDPackage>::ApproximateByFidelity(approx_info.step_fidelity, false, true);
-                    approximation_runs++;
-                    final_fidelity *= ap_fid;
-                    /*std::clog << "[INFO] Fidelity-driven ApproximationInfo run finished. "
-                              << "op_num=" << op_num
-                              << "; previous size=" << size_before
-                              << "; attained fidelity=" << ap_fid
-                              << "; global fidelity=" << final_fidelity
-                              << "; #runs=" << approximation_runs
-                              << "\n";//*/
-                } else if (approx_info.approx_when == ApproximationInfo::MemoryDriven) {
-                    [[maybe_unused]] const unsigned int size_before = Simulator<DDPackage>::dd->size(Simulator<DDPackage>::rootEdge);
-                    if (Simulator<DDPackage>::dd->template getUniqueTable<dd::vNode>().possiblyNeedsCollection()) {
-                        const double ap_fid = Simulator<DDPackage>::ApproximateByFidelity(approx_info.step_fidelity, false, true);
-                        approximation_runs++;
-                        final_fidelity *= ap_fid;
-                        /*std::clog << "[INFO] Memory-driven ApproximationInfo run finished. "
-                                  << "; previous size=" << size_before
-                                  << "; attained fidelity=" << ap_fid
-                                  << "; global fidelity=" << final_fidelity
-                                  << "; #runs=" << approximation_runs
-                                  << "\n";//*/
-                    }
-                }
-            }
-            Simulator<DDPackage>::dd->garbageCollect();
+            single_shot_gate_application(op.get(), op_num, approx_mod);
         }
 
         op_num++;
     }
     return classic_values;
+}
+
+template<class DDPackage>
+void CircuitSimulator<DDPackage>::single_shot_gate_application(qc::Operation* op, std::size_t op_num, int approx_mod) {
+    std::cout << "Applying gate " << op->getName() << std::endl;
+    auto dd_op = dd::getDD(op, Simulator<DDPackage>::dd);
+    auto tmp   = Simulator<DDPackage>::dd->multiply(dd_op, Simulator<DDPackage>::rootEdge);
+    Simulator<DDPackage>::dd->incRef(tmp);
+    Simulator<DDPackage>::dd->decRef(Simulator<DDPackage>::rootEdge);
+    Simulator<DDPackage>::rootEdge = tmp;
+
+    if (approx_info.step_number > 0 && approx_info.step_fidelity < 1.0) {
+        if (approx_info.approx_when == ApproximationInfo::FidelityDriven && (op_num + 1) % approx_mod == 0 &&
+            approximation_runs < approx_info.step_number) {
+            //const unsigned int size_before = dd->size(rootEdge);
+            const double ap_fid = Simulator<DDPackage>::ApproximateByFidelity(approx_info.step_fidelity, false, true);
+            approximation_runs++;
+            final_fidelity *= ap_fid;
+            /*std::clog << "[INFO] Fidelity-driven ApproximationInfo run finished. "
+                      << "op_num=" << op_num
+                      << "; previous size=" << size_before
+                      << "; attained fidelity=" << ap_fid
+                      << "; global fidelity=" << final_fidelity
+                      << "; #runs=" << approximation_runs
+                      << "\n";//*/
+        } else if (approx_info.approx_when == ApproximationInfo::MemoryDriven) {
+            [[maybe_unused]] const unsigned int size_before = Simulator<DDPackage>::dd->size(Simulator<DDPackage>::rootEdge);
+            if (Simulator<DDPackage>::dd->template getUniqueTable<dd::vNode>().possiblyNeedsCollection()) {
+                const double ap_fid = Simulator<DDPackage>::ApproximateByFidelity(approx_info.step_fidelity, false, true);
+                approximation_runs++;
+                final_fidelity *= ap_fid;
+                /*std::clog << "[INFO] Memory-driven ApproximationInfo run finished. "
+                          << "; previous size=" << size_before
+                          << "; attained fidelity=" << ap_fid
+                          << "; global fidelity=" << final_fidelity
+                          << "; #runs=" << approximation_runs
+                          << "\n";//*/
+            }
+        }
+    }
+    Simulator<DDPackage>::dd->garbageCollect();
 }
 
 template class CircuitSimulator<dd::Package<>>;

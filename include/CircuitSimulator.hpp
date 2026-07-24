@@ -71,6 +71,10 @@ public:
 
     std::map<std::string, std::size_t> Simulate(unsigned int shots) override;
 
+    void setSummarizeLoops(bool summarize_loops) override {
+        this->summarize_loops = summarize_loops;
+    }
+
     std::map<std::string, std::string> AdditionalStatistics() override {
         return {
                 {"step_fidelity", std::to_string(approx_info.step_fidelity)},
@@ -93,8 +97,9 @@ protected:
     const ApproximationInfo approx_info;
     std::size_t             approximation_runs{0};
     long double             final_fidelity{1.0L};
-
+    bool                    summarize_loops{false};
     std::map<std::size_t, bool> single_shot(bool ignore_nonunitaries);
+    void                        single_shot_gate_application(qc::Operation* op, std::size_t op_num, int approx_mod);
 };
 
 #endif //DDSIM_CIRCUITSIMULATOR_HPP

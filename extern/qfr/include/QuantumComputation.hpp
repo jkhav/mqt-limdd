@@ -9,6 +9,7 @@
 #include "dd/Definitions.hpp"
 #include "dd/Operations.hpp"
 #include "operations/ClassicControlledOperation.hpp"
+#include "operations/ForLoopOperation.hpp"
 #include "operations/NonUnitaryOperation.hpp"
 #include "operations/StandardOperation.hpp"
 #include "parsers/qasm_parser/Parser.hpp"

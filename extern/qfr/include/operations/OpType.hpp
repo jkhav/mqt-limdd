@@ -14,6 +14,7 @@ namespace qc {
     // Natively supported operations of the QFR library
     enum OpType : std::uint8_t {
         None,
+        ForLoop,
         // Standard Operations
         I,
         H,
@@ -92,6 +93,7 @@ namespace qc {
             case Barrier: return "barrier";
             case Teleportation: return "teleportation";
             case ClassicControlled: return "classic controlled";
+            case ForLoop: return "for";
             default:
                 throw std::invalid_argument("Invalid OpType!");
         }
@@ -162,6 +164,8 @@ namespace qc {
             return OpType::Teleportation;
         else if (opType == "classic controlled" || opType == "31")
             return OpType::ClassicControlled;
+        else if (opType == "for" || opType == "32")
+            return OpType::ForLoop;
         else {
             throw std::invalid_argument("Unknown operation type: " + opType);
         }

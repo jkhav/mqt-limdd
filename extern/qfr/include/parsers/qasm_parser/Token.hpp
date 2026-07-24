@@ -64,7 +64,11 @@ namespace qasm {
             mcphase,
             sxgate,
             sxdggate,
-            comment
+            comment,
+            __for,
+            __int,
+            __in,
+            __colon,
         };
 
         Kind        kind    = Kind::none;

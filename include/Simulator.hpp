@@ -38,6 +38,8 @@ public:
 
     virtual std::map<std::string, std::size_t> Simulate(unsigned int shots) = 0;
 
+    virtual void setSummarizeLoops(bool summarize_loops) = 0;
+
     virtual std::map<std::string, std::string> AdditionalStatistics() { return {}; };
 
     std::string MeasureAll(bool collapse = false) {

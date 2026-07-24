@@ -16,6 +16,7 @@ add_library(
   ${${PROJECT_NAME}_SOURCE_DIR}/include/Definitions.hpp
   ${${PROJECT_NAME}_SOURCE_DIR}/include/operations/ClassicControlledOperation.hpp
   ${${PROJECT_NAME}_SOURCE_DIR}/include/operations/CompoundOperation.hpp
+  ${${PROJECT_NAME}_SOURCE_DIR}/include/operations/ForLoopOperation.hpp
   ${${PROJECT_NAME}_SOURCE_DIR}/include/operations/NonUnitaryOperation.hpp
   ${${PROJECT_NAME}_SOURCE_DIR}/include/operations/Operation.hpp
   ${${PROJECT_NAME}_SOURCE_DIR}/include/operations/StandardOperation.hpp
