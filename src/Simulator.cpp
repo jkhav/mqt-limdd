@@ -37,12 +37,12 @@ std::map<std::string, std::size_t> Simulator<DDPackage>::SampleFromAmplitudeVect
 template<class DDPackage>
 std::vector<dd::ComplexValue> Simulator<DDPackage>::getVector() const {
     assert(getNumberOfQubits() < 60); // On 64bit system the vector can hold up to (2^60)-1 elements, if memory permits
-    std::string                   path(getNumberOfQubits(), '0');
-    std::vector<dd::ComplexValue> results(1ull << getNumberOfQubits(), dd::complex_zero);
-    for (unsigned long long i = 0; i < 1ull << getNumberOfQubits(); ++i) {
-        const std::string corrected_path{path.rbegin(), path.rend()};
-        results[i] = dd->getValueByPath(rootEdge, corrected_path);
-        NextPath(path);
+    const auto amplitudes = dd->getVector(rootEdge);
+    const std::size_t expected = 1ULL << getNumberOfQubits();
+    std::vector<dd::ComplexValue> results(expected, dd::complex_zero);
+    const std::size_t n = std::min(expected, amplitudes.size());
+    for (std::size_t i = 0; i < n; i++) {
+        results[i] = {amplitudes[i].real(), amplitudes[i].imag()};
     }
     return results;
 }
@@ -50,14 +50,12 @@ std::vector<dd::ComplexValue> Simulator<DDPackage>::getVector() const {
 template<class DDPackage>
 std::vector<std::pair<dd::fp, dd::fp>> Simulator<DDPackage>::getVectorPair() const {
     assert(getNumberOfQubits() < 60); // On 64bit system the vector can hold up to (2^60)-1 elements, if memory permits
-    std::string                            path(getNumberOfQubits(), '0');
-    std::vector<std::pair<dd::fp, dd::fp>> results{1ull << getNumberOfQubits()};
-
-    for (unsigned long long i = 0; i < 1ull << getNumberOfQubits(); ++i) {
-        const std::string      corrected_path{path.rbegin(), path.rend()};
-        const dd::ComplexValue cv = dd->getValueByPath(rootEdge, corrected_path);
-        results[i]                = std::make_pair(cv.r, cv.i);
-        NextPath(path);
+    const auto amplitudes = dd->getVector(rootEdge);
+    const std::size_t expected = 1ULL << getNumberOfQubits();
+    std::vector<std::pair<dd::fp, dd::fp>> results(expected, std::make_pair(dd::complex_zero.r, dd::complex_zero.i));
+    const std::size_t n = std::min(expected, amplitudes.size());
+    for (std::size_t i = 0; i < n; i++) {
+        results[i] = std::make_pair(amplitudes[i].real(), amplitudes[i].imag());
     }
     return results;
 }
@@ -65,14 +63,12 @@ std::vector<std::pair<dd::fp, dd::fp>> Simulator<DDPackage>::getVectorPair() con
 template<class DDPackage>
 std::vector<std::complex<dd::fp>> Simulator<DDPackage>::getVectorComplex() const {
     assert(getNumberOfQubits() < 60); // On 64bit system the vector can hold up to (2^60)-1 elements, if memory permits
-    std::string                       path(getNumberOfQubits(), '0');
-    std::vector<std::complex<dd::fp>> results(1ull << getNumberOfQubits());
-
-    for (unsigned long long i = 0; i < 1ull << getNumberOfQubits(); ++i) {
-        const std::string      corrected_path{path.rbegin(), path.rend()};
-        const dd::ComplexValue cv = dd->getValueByPath(rootEdge, corrected_path);
-        results[i]                = std::complex<dd::fp>(cv.r, cv.i);
-        NextPath(path);
+    const auto amplitudes = dd->getVector(rootEdge);
+    const std::size_t expected = 1ULL << getNumberOfQubits();
+    std::vector<std::complex<dd::fp>> results(expected, std::complex<dd::fp>(dd::complex_zero.r, dd::complex_zero.i));
+    const std::size_t n = std::min(expected, amplitudes.size());
+    for (std::size_t i = 0; i < n; i++) {
+        results[i] = std::complex<dd::fp>(amplitudes[i].real(), amplitudes[i].imag());
     }
     return results;
 }
