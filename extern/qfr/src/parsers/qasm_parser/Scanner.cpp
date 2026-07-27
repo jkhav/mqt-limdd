@@ -23,15 +23,22 @@ namespace qasm {
             return;
         }
         if (!streams.empty()) {
-            col++;
-            streams.top()->get(ch);
-        } else {
-            if (!is.eof()) {
-                col++;
-                is.get(ch);
-            } else {
-                ch = static_cast<char>(-1);
+            if (!streams.top()->get(ch)) {
+                delete streams.top();
+                streams.pop();
+                ch   = lines.top().ch;
+                line = lines.top().line;
+                col  = lines.top().col;
+                lines.pop();
+                return;
             }
+            col++;
+        } else {
+            if (!is.get(ch)) {
+                ch = static_cast<char>(-1);
+                return;
+            }
+            col++;
         }
         if (ch == '\n') {
             col = 0;
@@ -112,6 +119,7 @@ namespace qasm {
     Scanner::Scanner(std::istream& is):
         is(is) {
         keywords["qreg"]               = Token::Kind::qreg;
+        keywords["qubit"]              = Token::Kind::qubit;
         keywords["creg"]               = Token::Kind::creg;
         keywords["gate"]               = Token::Kind::gate;
         keywords["measure"]            = Token::Kind::measure;
@@ -316,7 +324,8 @@ namespace qasm {
     void Scanner::addFileInput(const std::string& filename) {
         auto* in = new std::ifstream(filename, std::ifstream::in);
 
-        if (in->fail() && filename == "qelib1.inc") {
+        if (in->fail() && (filename == "qelib1.inc" || filename == "stdgates.inc")) {
+            // TODO: differentiate between qelib1.inc and stdgates.inc
             delete in;
             // internal qelib1.inc
             // parser can also read multiple-control versions of each gate

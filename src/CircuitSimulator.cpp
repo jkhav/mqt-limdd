@@ -151,20 +151,19 @@ std::map<std::size_t, bool> CircuitSimulator<DDPackage>::single_shot(const bool 
                     const std::vector<std::unique_ptr<qc::Operation>>& body = for_op->getBody();
                     // classic evaluation of the loop
                     if(!this->summarize_loops){
-                        std::cout << "Not summarizing loop" << std::endl;
                         for (int i = start; i <= stop; i++) {
-                            std::cout << "Evaluating body of loop for " << var << " = " << i << std::endl;
                             for (const auto& body_op: body) {
                                 single_shot_gate_application(body_op.get(), op_num, approx_mod);
                             }
+                            dd::export2Dot(Simulator<DDPackage>::rootEdge,
+                                           "limdd_" + var + "_" + std::to_string(i) + ".dot",
+                                           false, true, true, false, true, false);
                         }
                     }
                     // loop summarization using symbolic execution
                     else {
-                        std::cout << "Summarizing loop" << std::endl;
                     }
                 }
-                op_num++;
                 continue;
             }
             /*std::clog << "[INFO] op " << op_num << " is " << op->getName() << " on " << +op->getTargets().at(0)
@@ -181,7 +180,6 @@ std::map<std::size_t, bool> CircuitSimulator<DDPackage>::single_shot(const bool 
 
 template<class DDPackage>
 void CircuitSimulator<DDPackage>::single_shot_gate_application(qc::Operation* op, std::size_t op_num, int approx_mod) {
-    std::cout << "Applying gate " << op->getName() << std::endl;
     auto dd_op = dd::getDD(op, Simulator<DDPackage>::dd);
     auto tmp   = Simulator<DDPackage>::dd->multiply(dd_op, Simulator<DDPackage>::rootEdge);
     Simulator<DDPackage>::dd->incRef(tmp);

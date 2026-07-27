@@ -17,6 +17,7 @@ void qc::QuantumComputation::importOpenQASM(std::istream& is) {
 
     do {
         if (p.sym == Token::Kind::qreg) {
+            // OpenQASM 2: qreg q[10];
             p.scan();
             p.check(Token::Kind::identifier);
             std::string s = p.t.str;
@@ -24,6 +25,21 @@ void qc::QuantumComputation::importOpenQASM(std::istream& is) {
             p.check(Token::Kind::nninteger);
             auto n = static_cast<dd::QubitCount>(p.t.val);
             p.check(Token::Kind::rbrack);
+            p.check(Token::Kind::semicolon);
+            addQubitRegister(n, s.c_str());
+            p.nqubits = nqubits;
+        } else if (p.sym == Token::Kind::qubit) {
+            // OpenQASM 3: qubit[10] q;  or  qubit q;
+            p.scan();
+            dd::QubitCount n = 1;
+            if (p.sym == Token::Kind::lbrack) {
+                p.scan();
+                p.check(Token::Kind::nninteger);
+                n = static_cast<dd::QubitCount>(p.t.val);
+                p.check(Token::Kind::rbrack);
+            }
+            p.check(Token::Kind::identifier);
+            std::string s = p.t.str;
             p.check(Token::Kind::semicolon);
             addQubitRegister(n, s.c_str());
             p.nqubits = nqubits;
